@@ -2,6 +2,20 @@
 
 # for scanning IP addresses
 import scapy.all as scapy
+import argparse
+
+
+def get_arguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-t", "--target", dest="target",
+                        help="Target IP address to be scanned")
+    options = parser.parse_args()
+    # Check for empty fields
+    if not options.target:
+        parser.error(
+            "[-] Please specify a target IP address to scan, use --help for more info")
+    else:
+        return options
 
 
 def scan(ip_address):
@@ -13,13 +27,23 @@ def scan(ip_address):
     # print(arp_request_broadcast.summary())
     # arp_request_broadcast.show()
     # scapy.ls(scapy.ARP()) this list all the field we can set
-    answered_list = scapy.srp(arp_request_broadcast, timeout=1, verbose=False)[0]
-    print("IP\t\t\tMAC Address\n----------------------------------------------------------------")
+    answered_list = scapy.srp(arp_request_broadcast,
+                              timeout=1, verbose=False)[0]
+    clients_list = []
     for element in answered_list:
-        print(element[1].psrc)
-        print(element[1].hwsrc)
-        print("--------------------------------------------------------------------")
+        clients_dict = {"ip": element[1].psrc, "mac": element[1].hwsrc}
+        clients_list.append(clients_dict)
+
+    return clients_list
 
 
-scan("192.168.1.2/24")
+def print_result(result_list):
+    print("IP\t\t\tMAC Address\n-------------------------------------------------------")
 
+    for client in result_list:
+        print(client["ip"] + "\t\t" + client["mac"])
+
+
+option = get_arguments()
+result = scan(option.target)
+print_result(result)
